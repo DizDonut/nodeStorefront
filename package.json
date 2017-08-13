@@ -1,0 +1,26 @@
+{
+  "name": "package.json",
+  "version": "1.0.0",
+  "description": "dependencies for node storefront",
+  "main": "bamazonCustomer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DizDonut/nodeStorefront.git"
+  },
+  "author": "Mike Bechtel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DizDonut/nodeStorefront/issues"
+  },
+  "homepage": "https://github.com/DizDonut/nodeStorefront#readme",
+  "dependencies": {
+    "cli-table": "^0.3.1",
+    "colors": "^1.1.2",
+    "dotenv": "^4.0.0",
+    "inquirer": "^3.2.1",
+    "mysql": "^2.14.1"
+  }
+}
