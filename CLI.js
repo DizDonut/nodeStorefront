@@ -103,7 +103,7 @@ function customerMenu(){
             setTimeout(customerMenu, 1000);
           } else {
             console.log("Updating the quantity of item " + answer.choice + "...");
-            custUpdate(answer.choice, answer.quant, res[i].stock_quantity);
+            reduceInv(answer.choice, answer.quant, res[i].stock_quantity);
           }
         }//end for loop
       })
@@ -112,10 +112,137 @@ function customerMenu(){
 }//end customerMenu function
 
 function managerMenu(){
-
+  inquirer.prompt([
+    {
+      type: "list",
+      message: "Hey boss, what would you like to do?\n",
+      choices: ["View Products for Sale", "View Low Inventory", "Add to Inventory", "Add New Product", "Back to Main Menu", "Exit"],
+      name: "choice"
+    }
+  ]).then(function(ans){
+    switch (ans.choice) {
+      case "View Products for Sale":
+            console.log("Items for sale...");
+            setTimeout(prodList, 1500);
+            break;
+      case "View Low Inventory":
+            console.log("Low inventory...");
+            setTimeout(lowInv, 1500);
+            break;
+      case "Add to Inventory":
+            console.log("Okay boss, let's add some inventory...");
+            setTimeout(addInv, 1500);
+            break;
+      case "Add New Product":
+            console.log("Alright, a brand new product!");
+            setTimeout(addProd, 1500);
+            break;
+      case "Back to Main Menu":
+            menu();
+            break;
+      case "Exit":
+            console.log("Later, jefecito!");
+            return;
+            break;
+      default:
+            console.log("Sorry boss, I don't recognize that command");
+            setTimeout(menu, 1000)
+            break;
+    }//end switch statement
+  })//end inquirer prompt
 }//end managerMenu function
 
-function custUpdate(id, change, stock){
+function prodList(){
+  connection.query("SELECT * FROM products", function(err, res){
+    if (err) throw err;
+    var table = new Table({
+      head: ["Item ID", "Product Name", "Price", "Quantity Available"]
+    });
+    for (var i = 0; i < res.length; i++) {
+      table.push([res[i].item_ID, res[i].product_name, res[i].price, res[i].stock_quantity]);
+    }
+    console.log(table.toString());
+    backToMenu();
+  })//end query
+}//end prodList function
+
+function lowInv(){
+  connection.query("SELECT product_name FROM products GROUP BY stock_quantity HAVING count(*) < 5", function(err, res){
+    if (err) throw err;
+    var table = new Table({
+      head: ["Item ID", "Product Name", "Price", "Inventory"]
+    });
+    for (var i = 0; i < res.length; i++) {
+      if (res[i].stock_quantity < 5) {
+        table.push([res[i].item_ID, res[i].product_name, res[i].price, res[i].stock_quantity]);
+      }
+    }
+    if (table.length === 0) {
+      console.log("No items with a low inventory");
+    } else {
+      console.log(table.toString());
+    }
+    backToMenu();
+  })//end query
+}//end lowInv function
+
+function addInv(){
+  var table = new Table({
+    head: ["ID", "Name", "Department", "Price", "Inventory"]
+  }) //create table object
+
+  connection.query("SELECT * FROM products", function(err, res){
+    if (err) throw (err);
+    for (var i = 0; i < res.length; i++) {
+      table.push([
+        res[i].item_ID, res[i].product_name, res[i].department_name, res[i].price, res[i].stock_quantity
+      ])
+    }//end for loop to create table
+
+    console.log(table.toString());
+
+    inquirer.prompt([
+      {
+        type: "input",
+        message: "What would you like to add?",
+        name: "id"
+      },
+      {
+        type: "input",
+        message: "How much inventory would you like to add?",
+        name: "amount"
+      }
+    ]).then(function(answer){
+      connection.query("SELECT stock_quantity FROM products WHERE item_ID = ?", [answer.id], function(err, res){
+        if(err) throw err;
+        var newAmount = 0;
+        for (var i = 0; i <= res.length; i++) {
+          var newQuant = res[0].stock_quantity;
+        }
+
+        newAmount = parseInt(newQuant) + parseInt(answer.amount);
+        var query = "UPDATE products SET stock_quantity = ? WHERE item_ID = ?";
+        connection.query(query, [newAmount, answer.id], function(err, res){
+
+          console.log("Added " + answer.amount + " to item number: " + answer.id + ". New inventory: " + newAmount);
+        })
+        backToMenu();
+      })
+    })//end inquirer prompt
+  })//end first query to get all prods
+}//end addInv function
+
+function addProd(){
+  inquirer.prompt([
+    {
+      type: "input",
+      message: "Enter the name of your product: ",
+
+    }
+  ])
+}//end addProd function
+
+function reduceInv(id, change, stock){
   var newQuant = stock - change;
   var query = "UPDATE products SET stock_quantity = ? WHERE item_ID = ?";
   connection.query(query, [newQuant, id], function(err, res){
