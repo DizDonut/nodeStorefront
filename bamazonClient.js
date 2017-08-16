@@ -30,16 +30,17 @@ function menu(){
   ]).then(function(answer){
     switch (answer.choice) {
       case "Customer":
-            console.log("Opening customer portal...".bgBlue.yellow);
+            console.log("Opening customer portal...\n".bgBlue.yellow);
             setTimeout(customerMenu, 1500);
             break;
       case "Manager":
-            console.log("Opening manager portal...".bgGreen.white);
+            console.log("Opening manager portal...\n".bgGreen.white);
             setTimeout(managerMenu, 1500);
             break;
       case "Supervisor":
-            console.log("Opening supervisor portal...".bgMagenta.grey);
-            // setTimeout(supMenu, 1500);
+            console.log("Opening supervisor portal...\n".bgMagenta.grey);
+            console.log("We're sorry, the supervisor portal is currently under construction.".inverse);
+            menu();
             break;
       case "Exit":
             console.log("Goodbye!".inverse);
@@ -53,6 +54,8 @@ function menu(){
     }//end switch statement
   })//end inquirer prompt
 }//end menu function
+
+// ------ User Menu Functions -------- //
 
 function customerMenu(){
   var table = new Table({
@@ -267,8 +270,32 @@ function addProd(){
       name: "inventory"
     }
   ]).then(function(answers){
-    
-  })
+    connection.query("INSERT INTO products SET ?",
+    {
+      product_name: answers.product,
+      department_name: answers.department,
+      price: answers.price,
+      stock_quantity: answers.inventory
+    },
+      function(err){
+        if (err) throw err;
+        console.log(answers.product + " has been added to the database.");
+        inquirer.prompt([
+          {
+            type: "list",
+            message: "Any more products to add?\n",
+            choices: ["Yes", "No"],
+            name: "choice"
+          }
+        ]).then(function(choice){
+          if(choice.choice === "Yes"){
+            addProd();
+          } else {
+            backToMenu();
+          }
+        })
+      })
+  })//end first inquirer prompt
 }//end addProd function
 
 function reduceInv(id, change, stock){
