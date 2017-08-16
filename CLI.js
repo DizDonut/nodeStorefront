@@ -237,9 +237,38 @@ function addProd(){
     {
       type: "input",
       message: "Enter the name of your product: ",
-
+      name: "product"
+    },
+    {
+      type: "input",
+      message: "Enter product department: ",
+      name: "department"
+    },
+    {
+      type: "input",
+      message: "Set the intial price: ",
+      validate: function(value){
+        if(isNaN(value) === false){
+          return true;
+        }
+        return false;
+      }, //end validate statement
+      name: "price"
+    },
+    {
+      type: "input",
+      message: "Set the product inventory: ",
+      validate: function(value){
+        if(isNaN(value) === false){
+          return true;
+        }
+        return false;
+      }, //end validate statement
+      name: "inventory"
     }
-  ])
+  ]).then(function(answers){
+    
+  })
 }//end addProd function
 
 function reduceInv(id, change, stock){
