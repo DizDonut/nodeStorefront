@@ -1,9 +1,11 @@
+//initialize dependencies
 require("dotenv").config();
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 var colors = require("colors");
 var Table = require("cli-table");
 
+//create connection to sql db
 var connection = mysql.createConnection({
   host: process.env.MYSQL_HOST,
   port: 3306,
@@ -12,13 +14,16 @@ var connection = mysql.createConnection({
   database: "bamazon"
 })
 
+//on connection, run the menu function
 connection.connect(function(err){
   if(err) throw err;
   menu();
 })
 
 //-------------Functions----------------//
-
+/*
+  menu function runs an inquirer prompt to allow the user to login as a different user type
+*/
 function menu(){
   inquirer.prompt([
     {
@@ -28,6 +33,7 @@ function menu(){
       name: "choice"
     }
   ]).then(function(answer){
+    //on the different cases, runs the appropriate functions
     switch (answer.choice) {
       case "Customer":
             console.log("Opening customer portal...\n".bgBlue.yellow);
@@ -55,7 +61,12 @@ function menu(){
   })//end inquirer prompt
 }//end menu function
 
-// ------ User Menu Functions -------- //
+/*
+  customerMenu is the menu that will display if a user chooses the Customer user type
+  It queries our db and returns all products available to purchase, in a table format
+  User is prompted to select which item to buy and the quantity.  The db is updated
+  with the new quantity number once the user confirms his/her purchase
+*/
 
 function customerMenu(){
   var table = new Table({
@@ -102,9 +113,13 @@ function customerMenu(){
       connection.query(query, [answer.choice], function(err, res){
         for (var i = 0; i < res.length; i++) {
           if(answer.quant > res[i].stock_quantity){
+
+            //if the user chooses too many items, send them back to the customer menu
             console.log("There isn't enough in stock to accomodate that request.");
             setTimeout(customerMenu, 1000);
           } else {
+
+            //otherwise run the reduceInv function to update the db
             console.log("Updating the quantity of item " + answer.choice + "...");
             reduceInv(answer.choice, answer.quant, res[i].stock_quantity);
           }
@@ -114,6 +129,10 @@ function customerMenu(){
   })//end connection query
 }//end customerMenu function
 
+/*
+  managerMenu displays the options that are available to a manager.  On the different cases, run the appropriate
+  mananger functions
+*/
 function managerMenu(){
   inquirer.prompt([
     {
@@ -155,6 +174,9 @@ function managerMenu(){
   })//end inquirer prompt
 }//end managerMenu function
 
+/*
+  prodList is a function that queries the db and returns all items from the produts table
+*/
 function prodList(){
   connection.query("SELECT * FROM products", function(err, res){
     if (err) throw err;
@@ -169,6 +191,11 @@ function prodList(){
   })//end query
 }//end prodList function
 
+/*
+  lowInv function queries the db and returns all items from the products table,
+  where the stock_quantity is less than 5.  If it is less than five, create a table object
+  and display the details in the appropriate columns.
+*/
 function lowInv(){
   connection.query("SELECT * FROM products GROUP BY stock_quantity HAVING count(*) < 5", function(err, res){
     if (err) throw err;
@@ -189,11 +216,15 @@ function lowInv(){
   })//end query
 }//end lowInv function
 
+/*
+  addInv function updates the stock_quantity of a specific product name
+*/
 function addInv(){
   var table = new Table({
     head: ["ID", "Name", "Department", "Price", "Inventory"]
   }) //create table object
 
+  //build table with all products
   connection.query("SELECT * FROM products", function(err, res){
     if (err) throw (err);
     for (var i = 0; i < res.length; i++) {
@@ -202,6 +233,7 @@ function addInv(){
       ])
     }//end for loop to create table
 
+    //display that table to the manager
     console.log(table.toString());
 
     inquirer.prompt([
@@ -223,10 +255,12 @@ function addInv(){
           var newQuant = res[0].stock_quantity;
         }
 
+        //hold the existing quantity + our added quantity in a variable
         newAmount = parseInt(newQuant) + parseInt(answer.amount);
         var query = "UPDATE products SET stock_quantity = ? WHERE item_ID = ?";
-        connection.query(query, [newAmount, answer.id], function(err, res){
 
+        //update the id chosen with our new quantity amount
+        connection.query(query, [newAmount, answer.id], function(err, res){
           console.log("Added " + answer.amount + " to item number: " + answer.id + ". New inventory: " + newAmount);
           backToMenu();
         })
@@ -235,6 +269,11 @@ function addInv(){
   })//end first query to get all prods
 }//end addInv function
 
+/*
+  addProd function allows a manager to add a new product to our product table
+  Prompts with inquirer to fill in all applicable column data and then use Insert Into
+  to add the new product to our table
+*/
 function addProd(){
   inquirer.prompt([
     {
@@ -298,6 +337,13 @@ function addProd(){
   })//end first inquirer prompt
 }//end addProd function
 
+/*
+  reduceInv function takes 3 parameters and reduces the stock_quantity in our products table
+  by the amount purchased by the customer.
+
+  @id = the value assigned to answer.choice in customerMenu function
+  @change = value assigned to answer.quant in customerMenu function
+*/
 function reduceInv(id, change, stock){
   var newQuant = stock - change;
   var query = "UPDATE products SET stock_quantity = ? WHERE item_ID = ?";
@@ -315,6 +361,9 @@ function reduceInv(id, change, stock){
   })//end second connection query
 }//end custUpdate function
 
+/*
+  backToMenu function asks the user if he/she wants to return to menu function
+*/
 function backToMenu(){
   inquirer.prompt([
     {
@@ -331,4 +380,4 @@ function backToMenu(){
       return;
     }
   })
-}
+}//end backToMenu function
