@@ -170,7 +170,7 @@ function prodList(){
 }//end prodList function
 
 function lowInv(){
-  connection.query("SELECT product_name FROM products GROUP BY stock_quantity HAVING count(*) < 5", function(err, res){
+  connection.query("SELECT * FROM products GROUP BY stock_quantity HAVING count(*) < 5", function(err, res){
     if (err) throw err;
     var table = new Table({
       head: ["Item ID", "Product Name", "Price", "Inventory"]
@@ -228,8 +228,8 @@ function addInv(){
         connection.query(query, [newAmount, answer.id], function(err, res){
 
           console.log("Added " + answer.amount + " to item number: " + answer.id + ". New inventory: " + newAmount);
+          backToMenu();
         })
-        backToMenu();
       })
     })//end inquirer prompt
   })//end first query to get all prods
